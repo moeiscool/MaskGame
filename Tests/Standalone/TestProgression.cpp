@@ -122,6 +122,27 @@ namespace
 		Tiers.BombBagTier = 1; CHECK_EQ(Tiers.GetMaxBombs(), 20);
 		Tiers.BombBagTier = 3; CHECK_EQ(Tiers.GetMaxBombs(), 40);
 		Tiers.WalletTier = 2; CHECK_EQ(Tiers.GetMaxRupees(), 500);
+
+		TEST_CASE("no magic meter until a fairy grants one");
+		CHECK_EQ(Tiers.GetMaxMagic(), 0);
+		Tiers.MagicTier = 1; CHECK_EQ(Tiers.GetMaxMagic(), 50);
+		Tiers.MagicTier = 2; CHECK_EQ(Tiers.GetMaxMagic(), 100);
+	}
+
+	void TestMagicMeterSurvivesTheRewind()
+	{
+		// The three transformed forms all spend magic on their special action, so
+		// losing the meter to a rewind would quietly disable half the game.
+		TEST_CASE("the magic meter is permanent progression");
+		FProgressionState State;
+		State.Equipment().MagicTier = 2;
+		State.Carried().Rupees = 60;
+
+		State.ResetForNewCycle();
+
+		CHECK_EQ(State.Equipment().MagicTier, 2);
+		CHECK_EQ(State.Equipment().GetMaxMagic(), 100);
+		CHECK_EQ(State.Carried().Rupees, 0);
 	}
 
 	void TestEchoesAndFairies()
@@ -159,6 +180,42 @@ namespace
 		CHECK_EQ(static_cast<int>(State.GetMaskCount()), 0);
 	}
 
+	void TestRestoreFromSave()
+	{
+		TEST_CASE("restored hearts, bank and fairies land where the save left them");
+		FProgressionState State;
+
+		State.RestoreHearts(7, 2);
+		CHECK_EQ(State.GetMaxHearts(), 7);
+		CHECK_EQ(State.GetHeartFragments(), 2);
+
+		State.RestoreBankedRupees(430);
+		CHECK_EQ(State.GetBankedRupees(), 430);
+
+		State.RestoreStrayFairies(EEchoId::Frostcrown, 9);
+		CHECK_EQ(State.GetStrayFairies(EEchoId::Frostcrown), 9);
+
+		TEST_CASE("a nonsensical save is folded into a state the game can hold");
+		State.RestoreHearts(1, 11);       // Fewer than the starting three, and a full container of loose fragments.
+		CHECK_EQ(State.GetMaxHearts(), 5); // Three floor, plus two containers folded out of eleven fragments.
+		CHECK_EQ(State.GetHeartFragments(), 3);
+
+		State.RestoreBankedRupees(-50);
+		CHECK_EQ(State.GetBankedRupees(), 0);
+
+		State.RestoreStrayFairies(EEchoId::Frostcrown, 500);
+		CHECK_EQ(State.GetStrayFairies(EEchoId::Frostcrown), 15);
+		State.RestoreStrayFairies(EEchoId::None, 5);
+		CHECK_EQ(State.GetStrayFairies(EEchoId::None), 0);
+
+		TEST_CASE("touched statues can be read back out for saving");
+		State.TouchStatue("statue.mirefen");
+		State.TouchStatue("statue.frostcrown");
+		State.TouchStatue("statue.mirefen");
+		CHECK_EQ(static_cast<int>(State.GetTouchedStatues().size()), 2);
+		CHECK(State.HasTouchedStatue("statue.mirefen"));
+	}
+
 	void TestCollectingEveryMask()
 	{
 		TEST_CASE("the full set is every id except None");
@@ -181,7 +238,9 @@ int main()
 	TestHeartFragments();
 	TestBanking();
 	TestEquipmentTiers();
+	TestMagicMeterSurvivesTheRewind();
 	TestEchoesAndFairies();
+	TestRestoreFromSave();
 	TestCollectingEveryMask();
 	return MaskGameTest::Report("ProgressionState");
 }

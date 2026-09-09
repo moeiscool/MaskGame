@@ -1,0 +1,5 @@
+Name,DungeonId,DisplayName,Chapter,RegionId,PrimaryForm,Echo,BossName,KeyItem,RoomCount,SmallKeys,StrayFairies
+marshwood.temple,marshwood.temple,Marshwood Temple,3,marshwood.approach,Sapling,Marshwood,Bogblade Dancer,Hero's Bow,8,3,15
+frostcrown.temple,frostcrown.temple,Frostcrown Temple,6,frostcrown.summit,Boulderkin,Frostcrown,Ironhoof,Fire Arrow,10,3,15
+tidebreak.temple,tidebreak.temple,Tidebreak Temple,9,tidebreak.reef,Tideborn,Tidebreak,Maw of the Reef,Ice Arrow,12,1,15
+sunkenspire.temple,sunkenspire.temple,Sunken Spire Temple,12,sunkenspire.base,Traveller,SunkenSpire,The Twinned Worm,Light Arrow,12,4,15

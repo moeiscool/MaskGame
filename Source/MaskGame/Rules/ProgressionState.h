@@ -74,10 +74,20 @@ namespace MaskGame
 		int32_t BombBagTier = 0; // 0 none, 1..3 = 20/30/40 bombs.
 		int32_t WalletTier = 1;  // 1..3 = 200/500/999 rupees.
 		int32_t BottleCount = 0; // 0..6.
+		int32_t MagicTier = 0;   // 0 none, 1 half meter, 2 full meter.
 
 		int32_t GetMaxArrows() const { return QuiverTier <= 0 ? 0 : 20 + QuiverTier * 10; }
 		int32_t GetMaxBombs() const { return BombBagTier <= 0 ? 0 : 10 + BombBagTier * 10; }
 		int32_t GetMaxRupees() const;
+
+		/**
+		 * Magic capacity.
+		 *
+		 * Zero until a fairy grants the meter, which matters: the sapling's glide,
+		 * the boulderkin's roll and the tideborn's barrier all draw on it, so a
+		 * player without a meter has three forms and none of their abilities.
+		 */
+		int32_t GetMaxMagic() const { return MagicTier <= 0 ? 0 : MagicTier * 50; }
 	};
 
 	/** Everything the player is carrying right now. All of it is lost on a rewind. */
@@ -124,6 +134,7 @@ namespace MaskGame
 
 		bool HasTouchedStatue(const std::string& StatueId) const { return TouchedStatues.count(StatueId) > 0; }
 		void TouchStatue(const std::string& StatueId) { TouchedStatues.insert(StatueId); }
+		const std::set<std::string>& GetTouchedStatues() const { return TouchedStatues; }
 
 		/** Four fragments make a heart container. */
 		void GiveHeartFragment();
@@ -174,6 +185,22 @@ namespace MaskGame
 
 		/** How many of the twenty-four masks have been collected. */
 		bool HasEveryMask() const { return OwnedMasks.size() >= static_cast<size_t>(EMaskId::Count) - 1; }
+
+		// ---- Deserialisation. ----
+		//
+		// A save stores totals, not the sequence of events that produced them, so
+		// loading needs to set these directly. They are grouped and named apart
+		// from the gameplay mutators above precisely because they bypass the rules
+		// those mutators enforce; nothing but save loading should call them.
+
+		/** Restore heart totals. Fragments beyond a full container roll into hearts. */
+		void RestoreHearts(int32_t InMaxHearts, int32_t InFragments);
+
+		/** Restore the bank balance without moving anything through the purse. */
+		void RestoreBankedRupees(int32_t Amount);
+
+		/** Restore a temple's returned-fairy count. */
+		void RestoreStrayFairies(EEchoId Temple, int32_t Count);
 
 	private:
 		// Permanent.

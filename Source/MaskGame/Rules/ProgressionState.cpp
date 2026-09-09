@@ -83,6 +83,30 @@ namespace MaskGame
 		return Moved;
 	}
 
+	void FProgressionState::RestoreHearts(int32_t InMaxHearts, int32_t InFragments)
+	{
+		MaxHearts = std::max(3, InMaxHearts);
+		HeartFragments = std::clamp(InFragments, 0, FragmentsPerHeart - 1);
+
+		// A save written by a future build could carry a full container's worth of
+		// loose fragments; fold them in rather than storing an impossible state.
+		MaxHearts += std::max(0, InFragments) / FragmentsPerHeart;
+	}
+
+	void FProgressionState::RestoreBankedRupees(int32_t Amount)
+	{
+		BankedRupees = std::max(0, Amount);
+	}
+
+	void FProgressionState::RestoreStrayFairies(EEchoId Temple, int32_t Count)
+	{
+		if (Temple == EEchoId::None || Temple == EEchoId::Count)
+		{
+			return;
+		}
+		StrayFairies[Temple] = std::clamp(Count, 0, StrayFairiesPerTemple);
+	}
+
 	int32_t FProgressionState::GetFlag(const std::string& Name) const
 	{
 		const auto It = Flags.find(Name);

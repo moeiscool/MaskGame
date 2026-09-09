@@ -35,3 +35,14 @@ foreach(SUITE CycleClock SongMatcher Progression MaskRules ScheduleTable)
   target_include_directories(Test${SUITE} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
   add_test(NAME ${SUITE} COMMAND Test${SUITE})
 endforeach()
+
+# The content tables are validated by a script rather than by C++, because what
+# they need checking against is the enums in MaskGameTypes.h and each other, both
+# of which are far easier to parse than to link.
+find_package(Python3 COMPONENTS Interpreter)
+if (Python3_Interpreter_FOUND)
+  add_test(NAME DataTables
+           COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../validate_data.py)
+else()
+  message(WARNING "Python 3 not found; the DataTables suite will be skipped.")
+endif()
