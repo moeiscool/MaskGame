@@ -51,6 +51,16 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "World")
 	TSubclassOf<AMaskWorldGenerator> WorldGeneratorClass;
 
+	/**
+	 * Drives the sky from the clock.
+	 *
+	 * Always spawned, greybox or not: it adopts a level's existing sky actors
+	 * rather than replacing them, and without it the day/night cycle is a number
+	 * on the HUD instead of something the player can see out of a window.
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "World")
+	TSubclassOf<class AMaskSkyDirector> SkyDirectorClass;
+
 protected:
 	UFUNCTION()
 	void HandleMoonFell();
@@ -73,6 +83,9 @@ protected:
 private:
 	UPROPERTY()
 	TObjectPtr<AMaskWorldGenerator> WorldGenerator;
+
+	UPROPERTY()
+	TObjectPtr<class AMaskSkyDirector> SkyDirector;
 
 	/** Guards against a rewind being started twice in the same frame. */
 	bool bRestartInProgress = false;

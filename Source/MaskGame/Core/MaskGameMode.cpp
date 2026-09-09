@@ -12,6 +12,7 @@
 #include "MaskGame.h"
 #include "Songs/OcarinaComponent.h"
 #include "Time/CycleSubsystem.h"
+#include "World/MaskSkyDirector.h"
 #include "World/MaskWorldGenerator.h"
 #include "World/SongListenerInterface.h"
 
@@ -20,6 +21,7 @@ AMaskGameMode::AMaskGameMode()
 	DefaultPawnClass = AMaskCharacter::StaticClass();
 	PlayerControllerClass = AMaskPlayerController::StaticClass();
 	WorldGeneratorClass = AMaskWorldGenerator::StaticClass();
+	SkyDirectorClass = AMaskSkyDirector::StaticClass();
 }
 
 void AMaskGameMode::BeginPlay()
@@ -38,6 +40,13 @@ void AMaskGameMode::BeginPlay()
 		FActorSpawnParameters Params;
 		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 		WorldGenerator = GetWorld()->SpawnActor<AMaskWorldGenerator>(WorldGeneratorClass, FTransform::Identity, Params);
+	}
+
+	if (SkyDirectorClass != nullptr && SkyDirector == nullptr)
+	{
+		FActorSpawnParameters SkyParams;
+		SkyParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		SkyDirector = GetWorld()->SpawnActor<AMaskSkyDirector>(SkyDirectorClass, FTransform::Identity, SkyParams);
 	}
 
 	BindToPlayer(GetPlayerCharacter());
@@ -175,6 +184,7 @@ void AMaskGameMode::RestartCycle(bool bBankProgress)
 
 	if (AMaskCharacter* Character = GetPlayerCharacter())
 	{
+		Character->ClearLockOn();
 		Character->RestoreFully();
 		if (const AActor* Start = FindPlayerStart(Character->GetController()))
 		{

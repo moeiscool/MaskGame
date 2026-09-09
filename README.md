@@ -17,6 +17,15 @@ authored levels, meshes or audio yet: dropping `MaskGameMode` into an empty map
 builds all thirteen regions and four temples out of the data tables at startup
 and lets you walk them.
 
+## Getting it running
+
+**New to Unreal?** Read [`SETUP.md`](SETUP.md). It goes from nothing installed
+to walking around the game, assuming no prior Unreal knowledge, and covers the
+two steps that are easy to miss: compiling the C++ before the editor will open
+the project, and importing the six CSV data tables once.
+
+The short version, if you already know Unreal:
+
 ## Requirements
 
 - Unreal Engine 5.5
@@ -58,21 +67,45 @@ validator that cross-checks every row of every CSV against the enums in
 
 ## Controls
 
-The greybox is bound through the fallback mappings in `Config/DefaultInput.ini`.
+Keyboard and controller both work out of the box, through the fallback mappings
+in `Config/DefaultInput.ini`. Plug a pad in and it is picked up; you can switch
+between the two mid-game.
 
-| Input | Action |
+| Action | Keyboard | Controller |
+| --- | --- | --- |
+| Move | `WASD` | Left stick |
+| Look | Mouse | Right stick |
+| Jump | `Space` | **A** / **Cross** |
+| Interact | `E` | **B** / **Circle** |
+| Attack | Left mouse | **X** / **Square** |
+| Form action (hold) | `Left Shift` | **Right trigger** |
+| Lock on / release | `Q` | **Left bumper** |
+| Draw or put away ocarina | `Tab` | **Y** / **Triangle** |
+| Mask slots 1–4 | `1`–`4` | **D-pad** |
+| Take the mask off | `0` | **View** / **Share** |
+
+While the ocarina is drawn the character's own controls are put away and the
+same buttons play the five notes — arrow keys and `Space`, or the d-pad and
+**A**. That sharing is deliberate: a controller has fewer buttons than the game
+has verbs, and the instrument is modal anyway. Time also holds still, so a song
+can be taken slowly.
+
+Locking on makes the character face its target and strafe around it rather than
+turning to face where it is walking, which is what frees the right thumb in a
+fight.
+
+## Console commands
+
+Press `` ` `` while playing. All prefixed `MaskGame.`, so typing that lists them.
+
+| Command | What it does |
 | --- | --- |
-| `WASD` / mouse | Move and look |
-| `Space` | Jump |
-| `E` | Interact |
-| `Left mouse` | Attack |
-| `Left shift` | The current form's special action |
-| `1`–`4` | Mask quick-slots |
-| `0` | Take the mask off |
-| `Tab` | Draw or put away the ocarina |
-| Arrow keys, `Space` | The five ocarina notes, while it is drawn |
-
-Time holds still while the ocarina is out.
+| `MaskGame.GiveAllMasks` | Grants all 24 masks |
+| `MaskGame.GiveMask <name>` | Grants one by name |
+| `MaskGame.LearnAllSongs` | Learns all 10 songs |
+| `MaskGame.SetTime <day> <hour>` | Moves the clock |
+| `MaskGame.Rewind` | Restarts the cycle, keeping what is permanent |
+| `MaskGame.Where` | Prints the time and who is in each region right now |
 
 ## How it fits together
 
@@ -89,7 +122,8 @@ Source/MaskGame/
   Character/    The player, taking all its movement numbers from the form tables.
   Songs/        The ocarina.
   Quests/       The data tables, the schedules, and the notebook.
-  World/        Statues, chests, temple gates, and the greybox generator.
+  World/        Statues, chests, temple gates, the greybox generator, and the
+                sky director that puts the clock on the sun.
   AI/           Enemies and temple guardians.
 Content/Data/   The walkthrough, as six CSV data tables.
 Tests/          The rules suites and the data validator.
@@ -106,7 +140,8 @@ Three rules hold the design together:
    like.
 3. **Anything time-dependent listens to `UCycleSubsystem`.** Nothing counts its
    own seconds, so slowing time, skipping to dusk and rewinding all work
-   everywhere for free.
+   everywhere for free — including the sun, which is driven by the same clock
+   and is the main way the player reads it.
 
 ## Licence
 

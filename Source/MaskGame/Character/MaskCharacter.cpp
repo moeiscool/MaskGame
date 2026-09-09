@@ -3,11 +3,13 @@
 #include "Character/MaskCharacter.h"
 
 #include "Camera/CameraComponent.h"
+#include "EngineUtils.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/GameplayStatics.h"
 
+#include "AI/MaskEnemy.h"
 #include "Core/MaskGameInstance.h"
 #include "MaskGame.h"
 #include "MaskRules.h"
@@ -124,6 +126,8 @@ void AMaskCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
+	UpdateLockOn(DeltaSeconds);
+
 	const MaskGame::FFormTraits& Traits = MaskGame::GetFormTraits(static_cast<MaskGame::EForm>(GetForm()));
 
 	if (bFormActionActive && Traits.MagicDrainPerSecond > 0.0f)
@@ -215,6 +219,11 @@ void AMaskCharacter::GrantMagicMeter(float NewMaxMagic)
 
 void AMaskCharacter::StartFormAction()
 {
+	if (IsOcarinaDrawn())
+	{
+		return;
+	}
+
 	const MaskGame::FFormTraits& Traits = MaskGame::GetFormTraits(static_cast<MaskGame::EForm>(GetForm()));
 
 	// A form whose action costs magic simply cannot start it on an empty meter.
@@ -248,6 +257,7 @@ void AMaskCharacter::Die()
 {
 	UE_LOG(LogMaskGame, Log, TEXT("The traveller has fallen."));
 	bFormActionActive = false;
+	ClearLockOn();
 	OnDied.Broadcast();
 }
 
@@ -260,13 +270,16 @@ void AMaskCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 	PlayerInputComponent->BindAxis(TEXT("MoveRight"), this, &AMaskCharacter::MoveRight);
 	PlayerInputComponent->BindAxis(TEXT("Turn"), this, &APawn::AddControllerYawInput);
 	PlayerInputComponent->BindAxis(TEXT("LookUp"), this, &APawn::AddControllerPitchInput);
+	PlayerInputComponent->BindAxis(TEXT("TurnRate"), this, &AMaskCharacter::TurnAtRate);
+	PlayerInputComponent->BindAxis(TEXT("LookUpRate"), this, &AMaskCharacter::LookUpAtRate);
 
-	PlayerInputComponent->BindAction(TEXT("Jump"), IE_Pressed, this, &ACharacter::Jump);
-	PlayerInputComponent->BindAction(TEXT("Jump"), IE_Released, this, &ACharacter::StopJumping);
+	PlayerInputComponent->BindAction(TEXT("Jump"), IE_Pressed, this, &AMaskCharacter::OnJumpPressed);
+	PlayerInputComponent->BindAction(TEXT("Jump"), IE_Released, this, &AMaskCharacter::OnJumpReleased);
 	PlayerInputComponent->BindAction(TEXT("Interact"), IE_Pressed, this, &AMaskCharacter::OnInteractPressed);
 	PlayerInputComponent->BindAction(TEXT("Attack"), IE_Pressed, this, &AMaskCharacter::OnAttackPressed);
 	PlayerInputComponent->BindAction(TEXT("FormAction"), IE_Pressed, this, &AMaskCharacter::StartFormAction);
 	PlayerInputComponent->BindAction(TEXT("FormAction"), IE_Released, this, &AMaskCharacter::StopFormAction);
+	PlayerInputComponent->BindAction(TEXT("LockOn"), IE_Pressed, this, &AMaskCharacter::ToggleLockOn);
 	PlayerInputComponent->BindAction(TEXT("RemoveMask"), IE_Pressed, this, &AMaskCharacter::OnRemoveMaskPressed);
 
 	PlayerInputComponent->BindAction(TEXT("MaskSlot1"), IE_Pressed, this, &AMaskCharacter::OnQuickSlot1);
@@ -280,9 +293,14 @@ void AMaskCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 	}
 }
 
+bool AMaskCharacter::IsOcarinaDrawn() const
+{
+	return Ocarina != nullptr && Ocarina->IsDrawn();
+}
+
 void AMaskCharacter::MoveForward(float Value)
 {
-	if (Controller == nullptr || FMath::IsNearlyZero(Value))
+	if (Controller == nullptr || IsOcarinaDrawn() || FMath::IsNearlyZero(Value))
 	{
 		return;
 	}
@@ -293,7 +311,7 @@ void AMaskCharacter::MoveForward(float Value)
 
 void AMaskCharacter::MoveRight(float Value)
 {
-	if (Controller == nullptr || FMath::IsNearlyZero(Value))
+	if (Controller == nullptr || IsOcarinaDrawn() || FMath::IsNearlyZero(Value))
 	{
 		return;
 	}
@@ -302,8 +320,52 @@ void AMaskCharacter::MoveRight(float Value)
 	AddMovementInput(FRotationMatrix(YawOnly).GetUnitAxis(EAxis::Y), Value);
 }
 
+void AMaskCharacter::TurnAtRate(float Value)
+{
+	if (Controller == nullptr || IsOcarinaDrawn() || IsLockedOn() || FMath::IsNearlyZero(Value))
+	{
+		return;
+	}
+
+	// Scaled by the frame time so the camera turns at the same speed whatever
+	// the frame rate, unlike a mouse delta which already accounts for it.
+	AddControllerYawInput(Value * GamepadTurnRate * GetWorld()->GetDeltaSeconds());
+}
+
+void AMaskCharacter::LookUpAtRate(float Value)
+{
+	if (Controller == nullptr || IsOcarinaDrawn() || IsLockedOn() || FMath::IsNearlyZero(Value))
+	{
+		return;
+	}
+
+	const float Direction = bInvertGamepadLookY ? 1.0f : -1.0f;
+	AddControllerPitchInput(Value * Direction * GamepadLookUpRate * GetWorld()->GetDeltaSeconds());
+}
+
+void AMaskCharacter::OnJumpPressed()
+{
+	// The jump button is also the A note, and the d-pad is also the mask slots.
+	// Rather than have the two fight over a press, drawing the ocarina puts the
+	// character's own controls away for as long as it is out.
+	if (!IsOcarinaDrawn())
+	{
+		Jump();
+	}
+}
+
+void AMaskCharacter::OnJumpReleased()
+{
+	StopJumping();
+}
+
 void AMaskCharacter::OnInteractPressed()
 {
+	if (IsOcarinaDrawn())
+	{
+		return;
+	}
+
 	// A short sphere sweep ahead of the player, taking the nearest thing that
 	// says it can be interacted with in this form.
 	const FVector Start = GetActorLocation();
@@ -330,6 +392,11 @@ void AMaskCharacter::OnInteractPressed()
 
 void AMaskCharacter::OnAttackPressed()
 {
+	if (IsOcarinaDrawn())
+	{
+		return;
+	}
+
 	const MaskGame::FFormTraits& Traits = MaskGame::GetFormTraits(static_cast<MaskGame::EForm>(GetForm()));
 	if (!Traits.bCanUseSword)
 	{
@@ -359,7 +426,7 @@ void AMaskCharacter::OnAttackPressed()
 
 void AMaskCharacter::OnRemoveMaskPressed()
 {
-	if (Masks != nullptr)
+	if (!IsOcarinaDrawn() && Masks != nullptr)
 	{
 		Masks->RemoveMask();
 	}
@@ -367,8 +434,145 @@ void AMaskCharacter::OnRemoveMaskPressed()
 
 void AMaskCharacter::EquipSlot(int32 SlotIndex)
 {
-	if (Masks != nullptr)
+	if (!IsOcarinaDrawn() && Masks != nullptr)
 	{
 		Masks->EquipQuickSlot(SlotIndex);
 	}
+}
+
+// ---------------------------------------------------------------------------
+// Lock-on
+// ---------------------------------------------------------------------------
+
+void AMaskCharacter::ToggleLockOn()
+{
+	if (IsOcarinaDrawn())
+	{
+		return;
+	}
+
+	if (IsLockedOn())
+	{
+		ClearLockOn();
+		return;
+	}
+
+	AActor* Target = FindLockOnTarget();
+	if (Target == nullptr)
+	{
+		return;
+	}
+
+	LockOnTarget = Target;
+	ApplyLockOnRotationMode();
+	UE_LOG(LogMaskGame, Verbose, TEXT("Locked on to %s."), *Target->GetName());
+}
+
+void AMaskCharacter::ClearLockOn()
+{
+	LockOnTarget.Reset();
+	ApplyLockOnRotationMode();
+}
+
+AActor* AMaskCharacter::FindLockOnTarget() const
+{
+	UWorld* World = GetWorld();
+	if (World == nullptr)
+	{
+		return nullptr;
+	}
+
+	const FVector Origin = GetActorLocation();
+	const FVector Facing = GetActorForwardVector();
+
+	AActor* Best = nullptr;
+	float BestScore = -1.0f;
+
+	for (TActorIterator<AMaskEnemy> It(World); It; ++It)
+	{
+		AMaskEnemy* Enemy = *It;
+		if (Enemy == nullptr || !Enemy->IsAlive())
+		{
+			continue;
+		}
+
+		const FVector ToEnemy = Enemy->GetActorLocation() - Origin;
+		const float Distance = ToEnemy.Size();
+		if (Distance > LockOnRange || Distance < KINDA_SMALL_NUMBER)
+		{
+			continue;
+		}
+
+		// Prefer what the player is already looking at over what merely happens
+		// to be closest, so a lock does not jump to something behind them.
+		const float Alignment = FVector::DotProduct(Facing, ToEnemy / Distance);
+		if (Alignment <= 0.0f)
+		{
+			continue;
+		}
+
+		const float Score = Alignment * (1.0f - Distance / LockOnRange);
+		if (Score > BestScore)
+		{
+			BestScore = Score;
+			Best = Enemy;
+		}
+	}
+
+	return Best;
+}
+
+void AMaskCharacter::UpdateLockOn(float DeltaSeconds)
+{
+	if (!LockOnTarget.IsValid())
+	{
+		// The target was destroyed rather than released - a guardian died, or the
+		// world was rebuilt by a rewind. bUseControllerRotationYaw is the tell
+		// that the camera is still configured for a lock that no longer exists.
+		if (bUseControllerRotationYaw)
+		{
+			ApplyLockOnRotationMode();
+		}
+		return;
+	}
+
+	AActor* Target = LockOnTarget.Get();
+
+	// A guardian that dies mid-swing, or one the player has run away from.
+	const AMaskEnemy* Enemy = Cast<AMaskEnemy>(Target);
+	const float Distance = FVector::Dist(GetActorLocation(), Target->GetActorLocation());
+	if ((Enemy != nullptr && !Enemy->IsAlive()) || Distance > LockOnBreakRange)
+	{
+		ClearLockOn();
+		return;
+	}
+
+	AController* OwningController = GetController();
+	if (OwningController == nullptr)
+	{
+		return;
+	}
+
+	// Swing the camera round to hold the target rather than snapping to it, so
+	// the lock reads as the camera moving rather than the world jumping.
+	const FRotator Desired = (Target->GetActorLocation() - GetActorLocation()).Rotation();
+	const FRotator Current = OwningController->GetControlRotation();
+	OwningController->SetControlRotation(
+		FMath::RInterpConstantTo(Current, Desired, DeltaSeconds, LockOnCameraSpeed));
+}
+
+void AMaskCharacter::ApplyLockOnRotationMode()
+{
+	UCharacterMovementComponent* Movement = GetCharacterMovement();
+	if (Movement == nullptr)
+	{
+		return;
+	}
+
+	// Unlocked, the character turns to face wherever it is walking. Locked, it
+	// keeps facing the target and circles it, which is what lets the left stick
+	// strafe while the right thumb does nothing.
+	const bool bLocked = IsLockedOn();
+	Movement->bOrientRotationToMovement = !bLocked;
+	bUseControllerRotationYaw = bLocked;
 }

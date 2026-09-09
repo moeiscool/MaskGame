@@ -184,9 +184,13 @@ void AMaskWorldGenerator::BuildRegion(const FRegionTableRow& Region)
 	RegionCentres.Add(Region.RegionId, Centre);
 	AddPlatform(Centre, SizeCm, /*bWalled=*/true);
 
-	// A marker block at the centre of each region, tall enough to sight across
-	// the world and find your bearings while greyboxing.
-	AddBox(*PropMeshes, Centre + FVector(0.0f, 0.0f, 300.0f), FVector(200.0f, 200.0f, 600.0f));
+	// A marker obelisk per region, tall enough to sight across the world and get
+	// your bearings while greyboxing. Deliberately off-centre: the middle of a
+	// region is where a player start goes, and spawning inside a solid block is
+	// a confusing first thirty seconds.
+	AddBox(*PropMeshes,
+		Centre + FVector(0.0f, SizeCm.Y * 0.4f, 300.0f),
+		FVector(200.0f, 200.0f, 600.0f));
 
 	if (!Region.StatueId.IsNone())
 	{
