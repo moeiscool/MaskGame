@@ -51,12 +51,22 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "World")
 	TSubclassOf<AMaskWorldGenerator> WorldGeneratorClass;
 
+	/**
+	 * Drives the sky from the clock.
+	 *
+	 * Always spawned, greybox or not: it adopts a level's existing sky actors
+	 * rather than replacing them, and without it the day/night cycle is a number
+	 * on the HUD instead of something the player can see out of a window.
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "World")
+	TSubclassOf<class AMaskSkyDirector> SkyDirectorClass;
+
 protected:
 	UFUNCTION()
 	void HandleMoonFell();
 
 	UFUNCTION()
-	void HandleSongPlayed(ESongType Song, ESongPerformance Performance);
+	void HandleSongPlayed(ESongType Song, ESongPerformance Performance, AActor* Performer);
 
 	UFUNCTION()
 	void HandlePlayerDied();
@@ -64,16 +74,33 @@ protected:
 	/** Offers a song to every listener in the level that is close enough to hear it. */
 	int32 BroadcastSongToListeners(ESongType Song, ESongPerformance Performance, AMaskCharacter* Performer);
 
-	/** Hooks the player's ocarina and death delegates. Safe to call more than once. */
+	/** Hooks a player's ocarina and death delegates. Safe to call more than once. */
 	void BindToPlayer(AMaskCharacter* Character);
 
 	UCycleSubsystem* GetCycle() const;
-	AMaskCharacter* GetPlayerCharacter() const;
+
+	/** Every local player's character. One entry in single player, more in split-screen. */
+	TArray<AMaskCharacter*> GetLocalCharacters() const;
+
+	/**
+	 * Where an additional local player spawns.
+	 *
+	 * Offset laterally from the player start so that two people joining a
+	 * split-screen game do not land inside one another.
+	 */
+	virtual APawn* SpawnDefaultPawnAtTransform_Implementation(AController* NewPlayer, const FTransform& Transform) override;
 
 private:
 	UPROPERTY()
 	TObjectPtr<AMaskWorldGenerator> WorldGenerator;
 
+	UPROPERTY()
+	TObjectPtr<class AMaskSkyDirector> SkyDirector;
+
 	/** Guards against a rewind being started twice in the same frame. */
 	bool bRestartInProgress = false;
+
+	/** How far apart additional local players are placed when they spawn, in centimetres. */
+	UPROPERTY(EditDefaultsOnly, Category = "Split Screen", meta = (ClampMin = "0.0"))
+	float LocalPlayerSpawnSpacing = 250.0f;
 };

@@ -14,7 +14,7 @@ class UCycleSubsystem;
 class UMaskGameInstance;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnNotePlayed, EOcarinaNote, Note);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSongPlayed, ESongType, Song, ESongPerformance, Performance);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnSongPlayed, ESongType, Song, ESongPerformance, Performance, AActor*, Performer);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnOcarinaToggled, bool, bDrawn);
 
 /**

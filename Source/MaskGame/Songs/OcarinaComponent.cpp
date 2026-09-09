@@ -115,7 +115,7 @@ void UOcarinaComponent::PlayNote(EOcarinaNote Note)
 
 	if (!ApplyTimeSong(Song, Performance))
 	{
-		OnSongPlayed.Broadcast(Song, Performance);
+		OnSongPlayed.Broadcast(Song, Performance, GetOwner());
 	}
 }
 
@@ -147,7 +147,7 @@ bool UOcarinaComponent::ApplyTimeSong(ESongType Song, ESongPerformance Performan
 		// The full rewind is the game mode's business: progression has to be
 		// banked and the region reloaded, neither of which belongs to a
 		// component on the player's back.
-		OnSongPlayed.Broadcast(Song, Performance);
+		OnSongPlayed.Broadcast(Song, Performance, GetOwner());
 		return true;
 	}
 }

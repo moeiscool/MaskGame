@@ -97,6 +97,75 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Character|Actions")
 	bool IsFormActionActive() const { return bFormActionActive; }
 
+	// ---- Lock-on. ----
+
+	/**
+	 * Fix the camera on the nearest enemy, or let go of the one already held.
+	 *
+	 * While locked the character faces its target and strafes around it instead
+	 * of turning to face where it is walking, which is what makes a stick usable
+	 * in a fight: the right thumb is free and the left one circles.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Character|Lock-On")
+	void ToggleLockOn();
+
+	UFUNCTION(BlueprintCallable, Category = "Character|Lock-On")
+	void ClearLockOn();
+
+	UFUNCTION(BlueprintPure, Category = "Character|Lock-On")
+	AActor* GetLockOnTarget() const { return LockOnTarget.Get(); }
+
+	UFUNCTION(BlueprintPure, Category = "Character|Lock-On")
+	bool IsLockedOn() const { return LockOnTarget.IsValid(); }
+
+	/** True while the ocarina is out, when the character's own controls are put away. */
+	UFUNCTION(BlueprintPure, Category = "Character")
+	bool IsOcarinaDrawn() const;
+
+	// ---- Player actions. ----
+	//
+	// Every verb the player has, as one public API. Three input sources drive it -
+	// keyboard, gamepad and the on-screen touch controls - and none of them own
+	// any behaviour: they translate a key, a stick or a finger into a call here.
+	// The guards that matter (the ocarina being out, a form that cannot swing a
+	// sword) live in these functions, once, rather than in each input path.
+
+	/** Walk. Both axes are -1..1 relative to where the camera is facing. */
+	UFUNCTION(BlueprintCallable, Category = "Character|Actions")
+	void ApplyMoveInput(float Forward, float Right);
+
+	/** Turn the camera by an amount already scaled for the frame. */
+	UFUNCTION(BlueprintCallable, Category = "Character|Actions")
+	void ApplyLookInput(float YawDelta, float PitchDelta);
+
+	UFUNCTION(BlueprintCallable, Category = "Character|Actions")
+	void RequestJump();
+
+	UFUNCTION(BlueprintCallable, Category = "Character|Actions")
+	void RequestStopJump();
+
+	/** Reach for whatever is in front of you: a person, a chest, a statue. */
+	UFUNCTION(BlueprintCallable, Category = "Character|Actions")
+	void TryInteract();
+
+	UFUNCTION(BlueprintCallable, Category = "Character|Actions")
+	void PerformAttack();
+
+	/** Take off whatever is worn, form and all. */
+	UFUNCTION(BlueprintCallable, Category = "Character|Actions")
+	void RemoveMask();
+
+	/** Put on the mask in a quick slot. Slots are one-based to match the keys. */
+	UFUNCTION(BlueprintCallable, Category = "Character|Actions")
+	bool EquipMaskSlot(int32 SlotIndex);
+
+	UFUNCTION(BlueprintCallable, Category = "Character|Actions")
+	void ToggleOcarina();
+
+	/** Play one note. Ignored unless the ocarina is drawn. */
+	UFUNCTION(BlueprintCallable, Category = "Character|Actions")
+	void PlayOcarinaNote(EOcarinaNote Note);
+
 	UPROPERTY(BlueprintAssignable, Category = "Character")
 	FOnHealthChanged OnHealthChanged;
 
@@ -125,14 +194,36 @@ protected:
 	// Input assets exist.
 	void MoveForward(float Value);
 	void MoveRight(float Value);
-	void OnInteractPressed();
-	void OnAttackPressed();
-	void OnRemoveMaskPressed();
-	void OnQuickSlot1() { EquipSlot(1); }
-	void OnQuickSlot2() { EquipSlot(2); }
-	void OnQuickSlot3() { EquipSlot(3); }
-	void OnQuickSlot4() { EquipSlot(4); }
-	void EquipSlot(int32 SlotIndex);
+
+	/**
+	 * Stick look.
+	 *
+	 * A mouse reports how far it moved since the last frame, so its value is
+	 * already a delta and goes straight to the controller. A stick reports how
+	 * far it is being held, so it has to be multiplied by a rate and by the
+	 * frame time or the camera speed would depend on the frame rate.
+	 */
+	void TurnAtRate(float Value);
+	void LookUpAtRate(float Value);
+
+	/** Mouse deltas need no frame scaling, but still go through ApplyLookInput
+	 *  so that a lock-on suppresses them the same as it does a stick. */
+	void MouseTurn(float Value);
+	void MouseLookUp(float Value);
+
+	void OnQuickSlot1() { EquipMaskSlot(1); }
+	void OnQuickSlot2() { EquipMaskSlot(2); }
+	void OnQuickSlot3() { EquipMaskSlot(3); }
+	void OnQuickSlot4() { EquipMaskSlot(4); }
+
+	/** Nearest living enemy in front of the player within LockOnRange, or null. */
+	AActor* FindLockOnTarget() const;
+
+	/** Drops the target when it dies, is destroyed, or walks out of range. */
+	void UpdateLockOn(float DeltaSeconds);
+
+	/** Switches between facing-where-you-walk and facing-the-target. */
+	void ApplyLockOnRotationMode();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<USpringArmComponent> CameraBoom;
@@ -154,6 +245,30 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character|Magic", meta = (ClampMin = "0.0"))
 	float MagicRegenPerSecond = 2.0f;
 
+	/** Degrees per second the right stick turns the camera at full deflection. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character|Input", meta = (ClampMin = "0.0"))
+	float GamepadTurnRate = 150.0f;
+
+	/** Degrees per second the right stick pitches the camera at full deflection. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character|Input", meta = (ClampMin = "0.0"))
+	float GamepadLookUpRate = 110.0f;
+
+	/** Push the right stick up to look up, rather than down. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Character|Input")
+	bool bInvertGamepadLookY = false;
+
+	/** How far away an enemy can be and still be locked onto. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character|Lock-On", meta = (ClampMin = "0.0"))
+	float LockOnRange = 1600.0f;
+
+	/** How far a locked target may get before the lock breaks. Wider than LockOnRange so it does not flicker. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character|Lock-On", meta = (ClampMin = "0.0"))
+	float LockOnBreakRange = 2400.0f;
+
+	/** Degrees per second the camera swings round to hold a locked target. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character|Lock-On", meta = (ClampMin = "0.0"))
+	float LockOnCameraSpeed = 360.0f;
+
 private:
 	UPROPERTY(VisibleInstanceOnly, Category = "Character")
 	float Health = 3.0f;
@@ -166,4 +281,7 @@ private:
 
 	UPROPERTY(VisibleInstanceOnly, Category = "Character")
 	bool bFormActionActive = false;
+
+	/** Weak, so a target destroyed mid-fight simply reads as gone rather than dangling. */
+	TWeakObjectPtr<AActor> LockOnTarget;
 };
