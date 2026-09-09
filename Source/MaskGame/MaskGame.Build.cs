@@ -20,12 +20,11 @@ public class MaskGame : ModuleRules
 			"GameplayTags",
 			"AIModule",
 			"NavigationSystem",
-		});
-
-		PrivateDependencyModuleNames.AddRange(new string[]
-		{
+			// Public because MaskPlayerController.h exposes the touch overlay,
+			// which is a Slate widget.
 			"Slate",
 			"SlateCore",
+			"ApplicationCore",
 		});
 
 		// The Rules folder is plain C++ with no engine dependency, shared verbatim

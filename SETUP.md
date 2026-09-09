@@ -21,6 +21,7 @@ The steps that actually need your attention take maybe fifteen minutes.
 11. [Console commands](#11-console-commands)
 12. [When something goes wrong](#12-when-something-goes-wrong)
 13. [Making a standalone build](#13-making-a-standalone-build)
+14. [Playing together, and on a phone](#14-playing-together-and-on-a-phone)
 
 ---
 
@@ -308,6 +309,9 @@ controller and keyboard mid-game.
 | Mask slots 1–4 | `1` `2` `3` `4` | **D-pad** up / right / down / left |
 | Take mask off | `0` | **View** / **Share** |
 
+On a phone or tablet the same actions appear as on-screen buttons; see
+[section 14](#14-playing-together-and-on-a-phone).
+
 **While the ocarina is out**, the controls above are put away and the same
 buttons play notes instead:
 
@@ -432,13 +436,52 @@ lower the viewport quality: the **Settings** dropdown in the viewport toolbar �
 
 ## 13. Making a standalone build
 
-Once it runs in the editor you can package a version that runs on its own:
+Once it runs in the editor you can package a version that runs on its own. The
+easiest way is the script:
 
-1. **Platforms → Windows → Package Project** (or Mac / Linux).
-2. Pick an empty output folder.
-3. Wait. A first package takes 20–40 minutes.
+```sh
+python3 Scripts/package.py --platform win64      # or mac, linux, android, ios
+```
 
-You get a folder with an executable in it that needs no engine installed.
+A first package takes 20–40 minutes and lands in `Build/<Platform>`. You get a
+folder with an executable in it that needs no engine installed.
+
+Android and iOS need their own SDKs installed first, and a Mac or iOS build has
+to be made on a Mac. All of that is in
+[`Docs/Packaging.md`](Docs/Packaging.md) — including the one step people get
+wrong on Android, which is letting Unreal's `SetupAndroid` script pick the SDK
+and NDK versions instead of choosing them by hand.
+
+## 14. Playing together, and on a phone
+
+### Split-screen
+
+On Windows, macOS and Linux, plug in a second controller and press **A** or
+**Start** on it. The screen splits and a second player joins, up to four.
+
+Everyone shares one cycle, one set of masks and one notebook — the three days
+belong to all of them, and any player can play the Hymn of Return to send
+everybody back to the first dawn. One player going down does not end the cycle;
+that only happens once nobody is left standing.
+
+Joining is deliberately by button press rather than by plugging a pad in, so a
+controller you left connected does not silently halve your screen.
+
+### Touch
+
+Android and iOS builds draw their own on-screen controls. You can try them on
+your desktop build without a touchscreen — press **`** and type:
+
+```
+MaskGame.Touch.Force 1
+```
+
+The movement stick is *floating*: it appears wherever your left thumb lands in
+the left of the screen rather than at a fixed spot, so you never have to look
+down to find it. Looking is a swipe on the right. Drawing the ocarina swaps the
+action buttons for the five notes, in the same positions.
+
+Type `MaskGame.Touch.Force 0` to go back to the default.
 
 ---
 
@@ -454,6 +497,6 @@ cmake --build build/tests
 ctest --test-dir build/tests --output-on-failure
 ```
 
-Six suites, 4,780 assertions, about a second. If you are changing the rules or
-the data tables, this is the fast loop — you do not need to open the editor at
-all.
+Seven suites, 4,852 assertions, about a second. If you are changing the rules,
+the data tables or the packaging flags, this is the fast loop — you do not need
+to open the editor at all.

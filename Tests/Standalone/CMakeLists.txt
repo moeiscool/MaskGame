@@ -43,6 +43,12 @@ find_package(Python3 COMPONENTS Interpreter)
 if (Python3_Interpreter_FOUND)
   add_test(NAME DataTables
            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../validate_data.py)
+
+  # The packaging script's dry run needs no engine, so its per-platform flags -
+  # arm64 for Apple Silicon, ASTC for Android, -distribution for Shipping - can
+  # be checked here rather than being discovered wrong at the end of a build.
+  add_test(NAME Packaging
+           COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../test_packaging.py)
 else()
   message(WARNING "Python 3 not found; the DataTables suite will be skipped.")
 endif()

@@ -122,6 +122,50 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Character")
 	bool IsOcarinaDrawn() const;
 
+	// ---- Player actions. ----
+	//
+	// Every verb the player has, as one public API. Three input sources drive it -
+	// keyboard, gamepad and the on-screen touch controls - and none of them own
+	// any behaviour: they translate a key, a stick or a finger into a call here.
+	// The guards that matter (the ocarina being out, a form that cannot swing a
+	// sword) live in these functions, once, rather than in each input path.
+
+	/** Walk. Both axes are -1..1 relative to where the camera is facing. */
+	UFUNCTION(BlueprintCallable, Category = "Character|Actions")
+	void ApplyMoveInput(float Forward, float Right);
+
+	/** Turn the camera by an amount already scaled for the frame. */
+	UFUNCTION(BlueprintCallable, Category = "Character|Actions")
+	void ApplyLookInput(float YawDelta, float PitchDelta);
+
+	UFUNCTION(BlueprintCallable, Category = "Character|Actions")
+	void RequestJump();
+
+	UFUNCTION(BlueprintCallable, Category = "Character|Actions")
+	void RequestStopJump();
+
+	/** Reach for whatever is in front of you: a person, a chest, a statue. */
+	UFUNCTION(BlueprintCallable, Category = "Character|Actions")
+	void TryInteract();
+
+	UFUNCTION(BlueprintCallable, Category = "Character|Actions")
+	void PerformAttack();
+
+	/** Take off whatever is worn, form and all. */
+	UFUNCTION(BlueprintCallable, Category = "Character|Actions")
+	void RemoveMask();
+
+	/** Put on the mask in a quick slot. Slots are one-based to match the keys. */
+	UFUNCTION(BlueprintCallable, Category = "Character|Actions")
+	bool EquipMaskSlot(int32 SlotIndex);
+
+	UFUNCTION(BlueprintCallable, Category = "Character|Actions")
+	void ToggleOcarina();
+
+	/** Play one note. Ignored unless the ocarina is drawn. */
+	UFUNCTION(BlueprintCallable, Category = "Character|Actions")
+	void PlayOcarinaNote(EOcarinaNote Note);
+
 	UPROPERTY(BlueprintAssignable, Category = "Character")
 	FOnHealthChanged OnHealthChanged;
 
@@ -162,16 +206,15 @@ protected:
 	void TurnAtRate(float Value);
 	void LookUpAtRate(float Value);
 
-	void OnJumpPressed();
-	void OnJumpReleased();
-	void OnInteractPressed();
-	void OnAttackPressed();
-	void OnRemoveMaskPressed();
-	void OnQuickSlot1() { EquipSlot(1); }
-	void OnQuickSlot2() { EquipSlot(2); }
-	void OnQuickSlot3() { EquipSlot(3); }
-	void OnQuickSlot4() { EquipSlot(4); }
-	void EquipSlot(int32 SlotIndex);
+	/** Mouse deltas need no frame scaling, but still go through ApplyLookInput
+	 *  so that a lock-on suppresses them the same as it does a stick. */
+	void MouseTurn(float Value);
+	void MouseLookUp(float Value);
+
+	void OnQuickSlot1() { EquipMaskSlot(1); }
+	void OnQuickSlot2() { EquipMaskSlot(2); }
+	void OnQuickSlot3() { EquipMaskSlot(3); }
+	void OnQuickSlot4() { EquipMaskSlot(4); }
 
 	/** Nearest living enemy in front of the player within LockOnRange, or null. */
 	AActor* FindLockOnTarget() const;

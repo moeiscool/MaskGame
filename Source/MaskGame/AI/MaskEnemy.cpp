@@ -84,18 +84,22 @@ void AMaskEnemy::Die()
 		}
 
 		// The arena dies with its owner: nobody should be able to keep the wrath
-		// mask on by standing where a boss used to be.
+		// mask on by standing where a boss used to be. In split-screen that means
+		// every local player, not just the one who landed the last hit.
 		if (ArenaVolume != nullptr)
 		{
 			ArenaVolume->SetGenerateOverlapEvents(false);
 		}
-		const APlayerController* Controller = GetWorld()->GetFirstPlayerController();
-		AMaskCharacter* Player = Controller != nullptr ? Cast<AMaskCharacter>(Controller->GetPawn()) : nullptr;
-		if (Player != nullptr)
+		for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
 		{
-			if (UMaskInventoryComponent* PlayerMasks = Player->GetMasks())
+			const APlayerController* Controller = It->Get();
+			AMaskCharacter* Player = Controller != nullptr ? Cast<AMaskCharacter>(Controller->GetPawn()) : nullptr;
+			if (Player != nullptr)
 			{
-				PlayerMasks->SetInBossArena(false);
+				if (UMaskInventoryComponent* PlayerMasks = Player->GetMasks())
+				{
+					PlayerMasks->SetInBossArena(false);
+				}
 			}
 		}
 	}

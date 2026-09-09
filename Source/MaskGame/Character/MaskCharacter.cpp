@@ -268,19 +268,19 @@ void AMaskCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 
 	PlayerInputComponent->BindAxis(TEXT("MoveForward"), this, &AMaskCharacter::MoveForward);
 	PlayerInputComponent->BindAxis(TEXT("MoveRight"), this, &AMaskCharacter::MoveRight);
-	PlayerInputComponent->BindAxis(TEXT("Turn"), this, &APawn::AddControllerYawInput);
-	PlayerInputComponent->BindAxis(TEXT("LookUp"), this, &APawn::AddControllerPitchInput);
+	PlayerInputComponent->BindAxis(TEXT("Turn"), this, &AMaskCharacter::MouseTurn);
+	PlayerInputComponent->BindAxis(TEXT("LookUp"), this, &AMaskCharacter::MouseLookUp);
 	PlayerInputComponent->BindAxis(TEXT("TurnRate"), this, &AMaskCharacter::TurnAtRate);
 	PlayerInputComponent->BindAxis(TEXT("LookUpRate"), this, &AMaskCharacter::LookUpAtRate);
 
-	PlayerInputComponent->BindAction(TEXT("Jump"), IE_Pressed, this, &AMaskCharacter::OnJumpPressed);
-	PlayerInputComponent->BindAction(TEXT("Jump"), IE_Released, this, &AMaskCharacter::OnJumpReleased);
-	PlayerInputComponent->BindAction(TEXT("Interact"), IE_Pressed, this, &AMaskCharacter::OnInteractPressed);
-	PlayerInputComponent->BindAction(TEXT("Attack"), IE_Pressed, this, &AMaskCharacter::OnAttackPressed);
+	PlayerInputComponent->BindAction(TEXT("Jump"), IE_Pressed, this, &AMaskCharacter::RequestJump);
+	PlayerInputComponent->BindAction(TEXT("Jump"), IE_Released, this, &AMaskCharacter::RequestStopJump);
+	PlayerInputComponent->BindAction(TEXT("Interact"), IE_Pressed, this, &AMaskCharacter::TryInteract);
+	PlayerInputComponent->BindAction(TEXT("Attack"), IE_Pressed, this, &AMaskCharacter::PerformAttack);
 	PlayerInputComponent->BindAction(TEXT("FormAction"), IE_Pressed, this, &AMaskCharacter::StartFormAction);
 	PlayerInputComponent->BindAction(TEXT("FormAction"), IE_Released, this, &AMaskCharacter::StopFormAction);
 	PlayerInputComponent->BindAction(TEXT("LockOn"), IE_Pressed, this, &AMaskCharacter::ToggleLockOn);
-	PlayerInputComponent->BindAction(TEXT("RemoveMask"), IE_Pressed, this, &AMaskCharacter::OnRemoveMaskPressed);
+	PlayerInputComponent->BindAction(TEXT("RemoveMask"), IE_Pressed, this, &AMaskCharacter::RemoveMask);
 
 	PlayerInputComponent->BindAction(TEXT("MaskSlot1"), IE_Pressed, this, &AMaskCharacter::OnQuickSlot1);
 	PlayerInputComponent->BindAction(TEXT("MaskSlot2"), IE_Pressed, this, &AMaskCharacter::OnQuickSlot2);
@@ -298,52 +298,42 @@ bool AMaskCharacter::IsOcarinaDrawn() const
 	return Ocarina != nullptr && Ocarina->IsDrawn();
 }
 
-void AMaskCharacter::MoveForward(float Value)
+void AMaskCharacter::ApplyMoveInput(float Forward, float Right)
 {
-	if (Controller == nullptr || IsOcarinaDrawn() || FMath::IsNearlyZero(Value))
+	if (Controller == nullptr || IsOcarinaDrawn())
 	{
 		return;
 	}
 
+	// Movement is relative to where the camera is pointing, not where the
+	// character is facing, so that walking left means left on the screen.
 	const FRotator YawOnly(0.0f, Controller->GetControlRotation().Yaw, 0.0f);
-	AddMovementInput(FRotationMatrix(YawOnly).GetUnitAxis(EAxis::X), Value);
+	const FRotationMatrix Frame(YawOnly);
+
+	if (!FMath::IsNearlyZero(Forward))
+	{
+		AddMovementInput(Frame.GetUnitAxis(EAxis::X), Forward);
+	}
+	if (!FMath::IsNearlyZero(Right))
+	{
+		AddMovementInput(Frame.GetUnitAxis(EAxis::Y), Right);
+	}
 }
 
-void AMaskCharacter::MoveRight(float Value)
+void AMaskCharacter::ApplyLookInput(float YawDelta, float PitchDelta)
 {
-	if (Controller == nullptr || IsOcarinaDrawn() || FMath::IsNearlyZero(Value))
+	// A lock holds the camera itself, so manual look is ignored rather than
+	// fighting the interpolation in UpdateLockOn.
+	if (Controller == nullptr || IsOcarinaDrawn() || IsLockedOn())
 	{
 		return;
 	}
 
-	const FRotator YawOnly(0.0f, Controller->GetControlRotation().Yaw, 0.0f);
-	AddMovementInput(FRotationMatrix(YawOnly).GetUnitAxis(EAxis::Y), Value);
+	AddControllerYawInput(YawDelta);
+	AddControllerPitchInput(PitchDelta);
 }
 
-void AMaskCharacter::TurnAtRate(float Value)
-{
-	if (Controller == nullptr || IsOcarinaDrawn() || IsLockedOn() || FMath::IsNearlyZero(Value))
-	{
-		return;
-	}
-
-	// Scaled by the frame time so the camera turns at the same speed whatever
-	// the frame rate, unlike a mouse delta which already accounts for it.
-	AddControllerYawInput(Value * GamepadTurnRate * GetWorld()->GetDeltaSeconds());
-}
-
-void AMaskCharacter::LookUpAtRate(float Value)
-{
-	if (Controller == nullptr || IsOcarinaDrawn() || IsLockedOn() || FMath::IsNearlyZero(Value))
-	{
-		return;
-	}
-
-	const float Direction = bInvertGamepadLookY ? 1.0f : -1.0f;
-	AddControllerPitchInput(Value * Direction * GamepadLookUpRate * GetWorld()->GetDeltaSeconds());
-}
-
-void AMaskCharacter::OnJumpPressed()
+void AMaskCharacter::RequestJump()
 {
 	// The jump button is also the A note, and the d-pad is also the mask slots.
 	// Rather than have the two fight over a press, drawing the ocarina puts the
@@ -354,12 +344,41 @@ void AMaskCharacter::OnJumpPressed()
 	}
 }
 
-void AMaskCharacter::OnJumpReleased()
+void AMaskCharacter::RequestStopJump()
 {
 	StopJumping();
 }
 
-void AMaskCharacter::OnInteractPressed()
+void AMaskCharacter::RemoveMask()
+{
+	if (!IsOcarinaDrawn() && Masks != nullptr)
+	{
+		Masks->RemoveMask();
+	}
+}
+
+bool AMaskCharacter::EquipMaskSlot(int32 SlotIndex)
+{
+	return !IsOcarinaDrawn() && Masks != nullptr && Masks->EquipQuickSlot(SlotIndex);
+}
+
+void AMaskCharacter::ToggleOcarina()
+{
+	if (Ocarina != nullptr)
+	{
+		Ocarina->ToggleDrawn();
+	}
+}
+
+void AMaskCharacter::PlayOcarinaNote(EOcarinaNote Note)
+{
+	if (Ocarina != nullptr)
+	{
+		Ocarina->PlayNote(Note);
+	}
+}
+
+void AMaskCharacter::TryInteract()
 {
 	if (IsOcarinaDrawn())
 	{
@@ -390,7 +409,7 @@ void AMaskCharacter::OnInteractPressed()
 	}
 }
 
-void AMaskCharacter::OnAttackPressed()
+void AMaskCharacter::PerformAttack()
 {
 	if (IsOcarinaDrawn())
 	{
@@ -424,20 +443,51 @@ void AMaskCharacter::OnAttackPressed()
 	}
 }
 
-void AMaskCharacter::OnRemoveMaskPressed()
+// ---------------------------------------------------------------------------
+// Input translation
+// ---------------------------------------------------------------------------
+
+void AMaskCharacter::MoveForward(float Value)
 {
-	if (!IsOcarinaDrawn() && Masks != nullptr)
-	{
-		Masks->RemoveMask();
-	}
+	ApplyMoveInput(Value, 0.0f);
 }
 
-void AMaskCharacter::EquipSlot(int32 SlotIndex)
+void AMaskCharacter::MoveRight(float Value)
 {
-	if (!IsOcarinaDrawn() && Masks != nullptr)
+	ApplyMoveInput(0.0f, Value);
+}
+
+void AMaskCharacter::TurnAtRate(float Value)
+{
+	if (FMath::IsNearlyZero(Value))
 	{
-		Masks->EquipQuickSlot(SlotIndex);
+		return;
 	}
+
+	// Scaled by the frame time so the camera turns at the same speed whatever
+	// the frame rate, unlike a mouse delta which already accounts for it.
+	ApplyLookInput(Value * GamepadTurnRate * GetWorld()->GetDeltaSeconds(), 0.0f);
+}
+
+void AMaskCharacter::MouseTurn(float Value)
+{
+	ApplyLookInput(Value, 0.0f);
+}
+
+void AMaskCharacter::MouseLookUp(float Value)
+{
+	ApplyLookInput(0.0f, Value);
+}
+
+void AMaskCharacter::LookUpAtRate(float Value)
+{
+	if (FMath::IsNearlyZero(Value))
+	{
+		return;
+	}
+
+	const float Direction = bInvertGamepadLookY ? 1.0f : -1.0f;
+	ApplyLookInput(0.0f, Value * Direction * GamepadLookUpRate * GetWorld()->GetDeltaSeconds());
 }
 
 // ---------------------------------------------------------------------------

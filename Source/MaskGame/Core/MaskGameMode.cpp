@@ -49,7 +49,10 @@ void AMaskGameMode::BeginPlay()
 		SkyDirector = GetWorld()->SpawnActor<AMaskSkyDirector>(SkyDirectorClass, FTransform::Identity, SkyParams);
 	}
 
-	BindToPlayer(GetPlayerCharacter());
+	for (AMaskCharacter* Character : GetLocalCharacters())
+	{
+		BindToPlayer(Character);
+	}
 }
 
 void AMaskGameMode::RestartPlayer(AController* NewPlayer)
@@ -70,9 +73,44 @@ UCycleSubsystem* AMaskGameMode::GetCycle() const
 	return World != nullptr ? World->GetSubsystem<UCycleSubsystem>() : nullptr;
 }
 
-AMaskCharacter* AMaskGameMode::GetPlayerCharacter() const
+TArray<AMaskCharacter*> AMaskGameMode::GetLocalCharacters() const
 {
-	return Cast<AMaskCharacter>(UGameplayStatics::GetPlayerPawn(this, 0));
+	TArray<AMaskCharacter*> Characters;
+
+	const UWorld* World = GetWorld();
+	if (World == nullptr)
+	{
+		return Characters;
+	}
+
+	for (FConstPlayerControllerIterator It = World->GetPlayerControllerIterator(); It; ++It)
+	{
+		const APlayerController* Controller = It->Get();
+		if (AMaskCharacter* Character = Controller != nullptr ? Cast<AMaskCharacter>(Controller->GetPawn()) : nullptr)
+		{
+			Characters.Add(Character);
+		}
+	}
+	return Characters;
+}
+
+APawn* AMaskGameMode::SpawnDefaultPawnAtTransform_Implementation(AController* NewPlayer, const FTransform& Transform)
+{
+	// Everyone shares one player start, so fan additional players out along it
+	// rather than letting the engine's collision nudging decide where they land.
+	const int32 ExistingPlayers = GetLocalCharacters().Num();
+
+	FTransform Spawn = Transform;
+	if (ExistingPlayers > 0)
+	{
+		// Alternate right and left of the start so a four-player game stays centred.
+		const int32 Step = (ExistingPlayers + 1) / 2;
+		const float Side = (ExistingPlayers % 2 == 1) ? 1.0f : -1.0f;
+		const FVector Offset = Transform.GetRotation().GetRightVector() * (Side * Step * LocalPlayerSpawnSpacing);
+		Spawn.SetLocation(Transform.GetLocation() + Offset);
+	}
+
+	return Super::SpawnDefaultPawnAtTransform_Implementation(NewPlayer, Spawn);
 }
 
 void AMaskGameMode::BindToPlayer(AMaskCharacter* Character)
@@ -98,22 +136,37 @@ void AMaskGameMode::HandleMoonFell()
 
 void AMaskGameMode::HandlePlayerDied()
 {
-	UE_LOG(LogMaskGame, Log, TEXT("The traveller fell. Returning to the first dawn."));
+	// In split-screen one player going down is not the end of the cycle; the
+	// others can still finish what they were doing. The rewind waits until
+	// nobody is left standing, which in single player is the same rule.
+	for (const AMaskCharacter* Character : GetLocalCharacters())
+	{
+		if (Character->IsAlive())
+		{
+			UE_LOG(LogMaskGame, Log, TEXT("A traveller fell, but the cycle goes on."));
+			return;
+		}
+	}
+
+	UE_LOG(LogMaskGame, Log, TEXT("Every traveller has fallen. Returning to the first dawn."));
 	RestartCycle(/*bBankProgress=*/true);
 }
 
-void AMaskGameMode::HandleSongPlayed(ESongType Song, ESongPerformance Performance)
+void AMaskGameMode::HandleSongPlayed(ESongType Song, ESongPerformance Performance, AActor* Performer)
 {
-	AMaskCharacter* Performer = GetPlayerCharacter();
-
 	// The full Hymn of Return is the one song the world does not get a say in.
+	// In split-screen either player can play it, and it takes everyone back:
+	// there is one cycle, and it belongs to all of them.
 	if (Song == ESongType::HymnOfReturn && Performance == ESongPerformance::Forward)
 	{
 		RestartCycle(/*bBankProgress=*/true);
 		return;
 	}
 
-	const int32 Answered = BroadcastSongToListeners(Song, Performance, Performer);
+	// The song is heard from wherever it was actually played, which in
+	// split-screen is not necessarily where player one is standing.
+	AMaskCharacter* PerformingCharacter = Cast<AMaskCharacter>(Performer);
+	const int32 Answered = BroadcastSongToListeners(Song, Performance, PerformingCharacter);
 	if (Answered == 0)
 	{
 		UE_LOG(LogMaskGame, Verbose, TEXT("%s went unanswered here."),
@@ -182,13 +235,21 @@ void AMaskGameMode::RestartCycle(bool bBankProgress)
 		WorldGenerator->RebuildWorld();
 	}
 
-	if (AMaskCharacter* Character = GetPlayerCharacter())
+	const TArray<AMaskCharacter*> Characters = GetLocalCharacters();
+	for (int32 Index = 0; Index < Characters.Num(); ++Index)
 	{
+		AMaskCharacter* Character = Characters[Index];
 		Character->ClearLockOn();
 		Character->RestoreFully();
+
 		if (const AActor* Start = FindPlayerStart(Character->GetController()))
 		{
-			Character->SetActorLocationAndRotation(Start->GetActorLocation(), Start->GetActorRotation());
+			// Same fan-out as the initial spawn, so a rewind does not stack
+			// split-screen players on top of one another.
+			const FVector Offset = Index > 0
+				? Start->GetActorRightVector() * (((Index % 2 == 1) ? 1.0f : -1.0f) * ((Index + 1) / 2) * LocalPlayerSpawnSpacing)
+				: FVector::ZeroVector;
+			Character->SetActorLocationAndRotation(Start->GetActorLocation() + Offset, Start->GetActorRotation());
 		}
 		BindToPlayer(Character);
 	}
