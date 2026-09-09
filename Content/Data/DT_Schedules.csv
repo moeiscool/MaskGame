@@ -1,0 +1,80 @@
+Name,ActorId,RegionId,Activity,Start,End,RequiredFlag,Priority
+npc.postman.000,npc.postman,bellwether.town,running the morning round,"(Day=1,Hour=6,Minute=0)","(Day=1,Hour=12,Minute=0)",,0
+npc.postman.001,npc.postman,bellwether.town,sorting the afternoon post,"(Day=1,Hour=12,Minute=0)","(Day=1,Hour=18,Minute=0)",,0
+npc.postman.002,npc.postman,bellwether.town,"asleep, boots by the door","(Day=1,Hour=18,Minute=0)","(Day=2,Hour=6,Minute=0)",,0
+npc.postman.003,npc.postman,bellwether.town,running the morning round,"(Day=2,Hour=6,Minute=0)","(Day=2,Hour=12,Minute=0)",,0
+npc.postman.004,npc.postman,bellwether.town,sorting the afternoon post,"(Day=2,Hour=12,Minute=0)","(Day=2,Hour=18,Minute=0)",,0
+npc.postman.005,npc.postman,bellwether.town,"asleep, boots by the door","(Day=2,Hour=18,Minute=0)","(Day=3,Hour=6,Minute=0)",,0
+npc.postman.006,npc.postman,bellwether.town,"standing at the window, not leaving","(Day=3,Hour=6,Minute=0)","(Day=3,Hour=5,Minute=59)",,0
+npc.bombshop.matron.007,npc.bombshop.matron,bellwether.town,behind the counter,"(Day=1,Hour=6,Minute=0)","(Day=1,Hour=18,Minute=0)",,0
+npc.bombshop.matron.008,npc.bombshop.matron,bellwether.outskirts,walking the north road with the bag,"(Day=1,Hour=18,Minute=0)","(Day=1,Hour=23,Minute=0)",,0
+npc.bombshop.matron.009,npc.bombshop.matron,bellwether.town,"behind the counter, shaken","(Day=1,Hour=23,Minute=0)","(Day=3,Hour=5,Minute=59)",,0
+npc.thief.010,npc.thief,bellwether.outskirts,waiting in the dark by the north road,"(Day=1,Hour=18,Minute=0)","(Day=1,Hour=23,Minute=0)",,0
+npc.thief.011,npc.thief,bellwether.town,selling what he took at the back counter,"(Day=1,Hour=0,Minute=0)","(Day=2,Hour=6,Minute=0)",,0
+npc.thief.012,npc.thief,bellwether.town,keeping out of sight,"(Day=2,Hour=6,Minute=0)","(Day=3,Hour=5,Minute=59)",,0
+npc.pawnbroker.013,npc.pawnbroker,bellwether.town,shutters down,"(Day=1,Hour=6,Minute=0)","(Day=1,Hour=0,Minute=0)",,0
+npc.pawnbroker.014,npc.pawnbroker,bellwether.town,"open for business, no questions","(Day=1,Hour=0,Minute=0)","(Day=2,Hour=6,Minute=0)",,0
+npc.pawnbroker.015,npc.pawnbroker,bellwether.town,shutters down,"(Day=2,Hour=6,Minute=0)","(Day=2,Hour=0,Minute=0)",,0
+npc.pawnbroker.016,npc.pawnbroker,bellwether.town,"open for business, no questions","(Day=2,Hour=0,Minute=0)","(Day=3,Hour=6,Minute=0)",,0
+npc.pawnbroker.017,npc.pawnbroker,bellwether.town,shutters down,"(Day=3,Hour=6,Minute=0)","(Day=3,Hour=0,Minute=0)",,0
+npc.pawnbroker.018,npc.pawnbroker,bellwether.town,"open for business, no questions","(Day=3,Hour=0,Minute=0)","(Day=3,Hour=5,Minute=59)",,0
+npc.bandleader.019,npc.bandleader,bellwether.town,drilling an empty square,"(Day=1,Hour=6,Minute=0)","(Day=1,Hour=10,Minute=0)",,0
+npc.bandleader.020,npc.bandleader,bellwether.town,"in the inn, waiting for a band","(Day=1,Hour=10,Minute=0)","(Day=2,Hour=6,Minute=0)",,0
+npc.bandleader.021,npc.bandleader,bellwether.town,drilling an empty square,"(Day=2,Hour=6,Minute=0)","(Day=2,Hour=10,Minute=0)",,0
+npc.bandleader.022,npc.bandleader,bellwether.town,"in the inn, waiting for a band","(Day=2,Hour=10,Minute=0)","(Day=3,Hour=6,Minute=0)",,0
+npc.bandleader.023,npc.bandleader,bellwether.town,drilling an empty square,"(Day=3,Hour=6,Minute=0)","(Day=3,Hour=10,Minute=0)",,0
+npc.bandleader.024,npc.bandleader,bellwether.town,"in the inn, waiting for a band","(Day=3,Hour=10,Minute=0)","(Day=3,Hour=5,Minute=59)",,0
+npc.bride.025,npc.bride,bellwether.town,waiting at the altar,"(Day=1,Hour=6,Minute=0)","(Day=3,Hour=5,Minute=59)",,0
+npc.bride.026,npc.bride,bellwether.town,at the altar with the letter in her hand,"(Day=1,Hour=6,Minute=0)","(Day=3,Hour=5,Minute=59)",perm.quest.lostson,10
+npc.bride.027,npc.bride,bellwether.town,"at the altar, and not alone","(Day=3,Hour=18,Minute=0)","(Day=3,Hour=5,Minute=59)",perm.quest.betrothal,20
+npc.groom.028,npc.groom,bellwether.town,"hidden in the back room, will not open","(Day=1,Hour=6,Minute=0)","(Day=3,Hour=5,Minute=59)",,0
+npc.groom.029,npc.groom,bellwether.town,opening the door a crack,"(Day=1,Hour=6,Minute=0)","(Day=3,Hour=5,Minute=59)",perm.quest.lostson,10
+npc.groom.030,npc.groom,bellwether.town,on his way to the altar,"(Day=3,Hour=18,Minute=0)","(Day=3,Hour=5,Minute=59)",perm.quest.betrothal,20
+npc.clockmaster.031,npc.clockmaster,bellwether.town,winding the tower,"(Day=1,Hour=6,Minute=0)","(Day=3,Hour=18,Minute=0)",,0
+npc.clockmaster.032,npc.clockmaster,bellwether.town,opening the tower for the carnival,"(Day=3,Hour=18,Minute=0)","(Day=3,Hour=5,Minute=59)",,0
+npc.fountain.spirit.033,npc.fountain.spirit,bellwether.town,"scattered, and barely holding together","(Day=1,Hour=6,Minute=0)","(Day=3,Hour=5,Minute=59)",,0
+npc.fountain.spirit.034,npc.fountain.spirit,bellwether.town,"whole again, and generous","(Day=1,Hour=6,Minute=0)","(Day=3,Hour=5,Minute=59)",perm.quest.gracemask,10
+npc.fieldman.035,npc.fieldman,bellwether.outskirts,"in the field, waiting for proof","(Day=1,Hour=6,Minute=0)","(Day=1,Hour=18,Minute=0)",,0
+npc.fieldman.036,npc.fieldman,bellwether.outskirts,"in the field, waiting for proof","(Day=2,Hour=6,Minute=0)","(Day=2,Hour=18,Minute=0)",,0
+npc.fieldman.037,npc.fieldman,bellwether.outskirts,"in the field, waiting for proof","(Day=3,Hour=6,Minute=0)","(Day=3,Hour=18,Minute=0)",,0
+npc.taleteller.038,npc.taleteller,bellwether.outskirts,telling it again to anyone passing,"(Day=1,Hour=6,Minute=0)","(Day=1,Hour=18,Minute=0)",,0
+npc.taleteller.039,npc.taleteller,bellwether.outskirts,telling it again to anyone passing,"(Day=2,Hour=6,Minute=0)","(Day=2,Hour=18,Minute=0)",,0
+npc.taleteller.040,npc.taleteller,bellwether.outskirts,telling it again to anyone passing,"(Day=3,Hour=6,Minute=0)","(Day=3,Hour=18,Minute=0)",,0
+npc.rainkeeper.041,npc.rainkeeper,bellwether.outskirts,watching a dry spring,"(Day=1,Hour=6,Minute=0)","(Day=3,Hour=5,Minute=59)",,0
+npc.rainkeeper.042,npc.rainkeeper,bellwether.outskirts,watching the spring run,"(Day=1,Hour=6,Minute=0)","(Day=3,Hour=5,Minute=59)",perm.quest.stormspring,10
+npc.witch.043,npc.witch,mirefen.swamp,"tending the shop alone, worried","(Day=1,Hour=6,Minute=0)","(Day=3,Hour=5,Minute=59)",,0
+npc.witch.044,npc.witch,mirefen.swamp,tending the shop with her sister back,"(Day=1,Hour=6,Minute=0)","(Day=3,Hour=5,Minute=59)",perm.quest.keennose,10
+npc.boatman.045,npc.boatman,mirefen.swamp,running the tour,"(Day=1,Hour=6,Minute=0)","(Day=1,Hour=18,Minute=0)",,0
+npc.boatman.046,npc.boatman,mirefen.swamp,moored up for the night,"(Day=1,Hour=18,Minute=0)","(Day=2,Hour=6,Minute=0)",,0
+npc.boatman.047,npc.boatman,mirefen.swamp,running the tour,"(Day=2,Hour=6,Minute=0)","(Day=2,Hour=18,Minute=0)",,0
+npc.boatman.048,npc.boatman,mirefen.swamp,moored up for the night,"(Day=2,Hour=18,Minute=0)","(Day=3,Hour=6,Minute=0)",,0
+npc.boatman.049,npc.boatman,mirefen.swamp,"running the tour, last day","(Day=3,Hour=6,Minute=0)","(Day=3,Hour=5,Minute=59)",,0
+npc.monkey.050,npc.monkey,mirefen.swamp,"tied up outside the palace, shouting","(Day=1,Hour=6,Minute=0)","(Day=3,Hour=5,Minute=59)",,0
+npc.monkey.051,npc.monkey,mirefen.swamp,"free, and leading the way north","(Day=1,Hour=6,Minute=0)","(Day=3,Hour=5,Minute=59)",perm.quest.monkeyheard,10
+npc.merchant.052,npc.merchant,mirefen.swamp,pressed into the rocks by the gate,"(Day=1,Hour=6,Minute=0)","(Day=3,Hour=5,Minute=59)",,0
+npc.spiderhouse.keeper.053,npc.spiderhouse.keeper,mirefen.swamp,"cursed, and counting","(Day=1,Hour=6,Minute=0)","(Day=3,Hour=5,Minute=59)",,0
+npc.mountain.elder.054,npc.mountain.elder,frostcrown.pass,"on the road, not going anywhere","(Day=1,Hour=6,Minute=0)","(Day=3,Hour=5,Minute=59)",,0
+npc.mountain.child.055,npc.mountain.child,frostcrown.pass,awake and inconsolable,"(Day=1,Hour=6,Minute=0)","(Day=3,Hour=5,Minute=59)",,0
+npc.mountain.child.056,npc.mountain.child,frostcrown.pass,asleep at last,"(Day=1,Hour=6,Minute=0)","(Day=3,Hour=5,Minute=59)",perm.quest.lullaby,10
+npc.frog.conductor.057,npc.frog.conductor,frostcrown.pass,waiting for a chorus four frogs short,"(Day=1,Hour=6,Minute=0)","(Day=3,Hour=5,Minute=59)",,0
+npc.ranch.younger.058,npc.ranch.younger,thaw.fields,telling anyone who will listen,"(Day=1,Hour=6,Minute=0)","(Day=2,Hour=18,Minute=0)",,0
+npc.ranch.younger.059,npc.ranch.younger,thaw.fields,"in the barn, waiting for them","(Day=2,Hour=18,Minute=0)","(Day=2,Hour=5,Minute=59)",,0
+npc.ranch.younger.060,npc.ranch.younger,thaw.fields,"quiet, and not saying why","(Day=2,Hour=5,Minute=59)","(Day=3,Hour=5,Minute=59)",,0
+npc.ranch.elder.061,npc.ranch.elder,thaw.fields,riding the fence line,"(Day=1,Hour=6,Minute=0)","(Day=1,Hour=18,Minute=0)",,0
+npc.ranch.elder.062,npc.ranch.elder,thaw.fields,in the house,"(Day=1,Hour=18,Minute=0)","(Day=2,Hour=6,Minute=0)",,0
+npc.ranch.elder.063,npc.ranch.elder,thaw.fields,riding the fence line,"(Day=2,Hour=6,Minute=0)","(Day=2,Hour=18,Minute=0)",,0
+npc.ranch.elder.064,npc.ranch.elder,thaw.fields,in the house,"(Day=2,Hour=18,Minute=0)","(Day=3,Hour=6,Minute=0)",,0
+npc.ranch.elder.065,npc.ranch.elder,thaw.fields,"riding the fence line, last day","(Day=3,Hour=6,Minute=0)","(Day=3,Hour=5,Minute=59)",,0
+npc.ghost.dancer.066,npc.ghost.dancer,thaw.fields,dancing on a stone at midnight,"(Day=1,Hour=0,Minute=0)","(Day=2,Hour=6,Minute=0)",,0
+npc.ghost.dancer.067,npc.ghost.dancer,thaw.fields,dancing on a stone at midnight,"(Day=2,Hour=0,Minute=0)","(Day=3,Hour=6,Minute=0)",,0
+npc.ghost.dancer.068,npc.ghost.dancer,thaw.fields,dancing on a stone at midnight,"(Day=3,Hour=0,Minute=0)","(Day=3,Hour=5,Minute=59)",,0
+npc.bone.captain.069,npc.bone.captain,thaw.fields,holding the barrow,"(Day=1,Hour=6,Minute=0)","(Day=3,Hour=5,Minute=59)",,0
+npc.guitarist.070,npc.guitarist,tidebreak.coast,washed up on the shore,"(Day=1,Hour=6,Minute=0)","(Day=3,Hour=5,Minute=59)",,0
+npc.marine.scientist.071,npc.marine.scientist,tidebreak.coast,"at the tanks, day and night","(Day=1,Hour=6,Minute=0)","(Day=3,Hour=5,Minute=59)",,0
+npc.band.leader.072,npc.band.leader,tidebreak.coast,rehearsing around an empty chair,"(Day=1,Hour=6,Minute=0)","(Day=3,Hour=5,Minute=59)",,0
+npc.band.leader.073,npc.band.leader,tidebreak.coast,rehearsing a full band,"(Day=1,Hour=6,Minute=0)","(Day=3,Hour=5,Minute=59)",perm.quest.bandreunion,10
+npc.watcher.074,npc.watcher,ashen.canyon,"somewhere above the road, watching","(Day=1,Hour=6,Minute=0)","(Day=3,Hour=5,Minute=59)",,0
+npc.organist.075,npc.organist,ashen.canyon,"playing, and has been for a long time","(Day=1,Hour=6,Minute=0)","(Day=3,Hour=5,Minute=59)",,0
+npc.well.dweller.076,npc.well.dweller,ashen.keep,"at the bottom of the well, waiting to be paid","(Day=1,Hour=6,Minute=0)","(Day=3,Hour=5,Minute=59)",,0
+npc.ashen.king.077,npc.ashen.king,ashen.keep,holding court over nobody,"(Day=1,Hour=6,Minute=0)","(Day=3,Hour=5,Minute=59)",,0
+npc.moon.child.078,npc.moon.child,moon.field,"under the tree, holding a mask","(Day=1,Hour=6,Minute=0)","(Day=3,Hour=5,Minute=59)",,0

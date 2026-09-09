@@ -1,0 +1,35 @@
+# Unreal Engine generated directories.
+Binaries/
+Build/
+DerivedDataCache/
+Intermediate/
+Saved/
+Platforms/
+.vs/
+.idea/
+.vscode/
+
+# Generated project files.
+*.sln
+*.suo
+*.xcodeproj/
+*.xcworkspace/
+*.VC.db
+*.VC.opendb
+*.opensdf
+*.sdf
+
+# Compiled binaries.
+*.dll
+*.exe
+*.lib
+*.pdb
+*.so
+*.dylib
+*.a
+*.o
+*.obj
+
+# Standalone rules test build output.
+Tests/Standalone/build/
+build/
